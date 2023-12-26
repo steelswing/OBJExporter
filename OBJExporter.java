@@ -54,40 +54,49 @@ public class OBJExporter {
         return str;
     }
     
-    public static int startIndex = 0;
+     public static class OBJMesh {
 
-    public static String export(List<int[]> rawIndeces, List<float[]> rawVertices) {
-        startIndex = 0;
-        String str = "";
-        for (int i = 0; i < rawVertices.size(); i++) {
-            
-            str += writeSimple("MUDAK_" + i, rawIndeces.get(i), rawVertices.get(i));
+        public final String name;
+        public final int[] indices;
+        public final float[] vertices;
+
+        public OBJMesh(String name, int[] indices, float[] vertices) {
+            this.name = name;
+            this.indices = indices;
+            this.vertices = vertices;
         }
-        
-        return str;
     }
-    
 
-    public static String writeSimple(String name, int[] indices, float[] vertices) {
-        String str = "# VERTICES \n";
-        for (int i = 0; i < vertices.length / 3; i++) {
-            str += "v " + vertices[i * 3 + 0] + " " + vertices[i * 3 + 1] + " " + (-vertices[i * 3 + 2]) + "\n";
+    public static String writeMultiple(List<OBJMesh> meshes) {
+        StringBuilder str = new StringBuilder();
+        int vertexCount = 1;
+
+        for (OBJMesh objMesh : meshes) {
+            str.append("o ").append(objMesh.name).append("\n");
+
+            // Vertices
+            str.append("# VERTICES \n");
+            for (int i = 0; i < objMesh.vertices.length; i += 3) {
+                str.append("v ").append(objMesh.vertices[i]).append(" ")
+                        .append(objMesh.vertices[i + 1]).append(" ")
+                        .append(objMesh.vertices[i + 2]).append("\n");
+            }
+
+            // Indices
+            str.append("# FACES \n");
+            for (int i = 0; i < objMesh.indices.length; i += 3) {
+                int v1 = objMesh.indices[i] + vertexCount;
+                int v2 = objMesh.indices[i + 1] + vertexCount;
+                int v3 = objMesh.indices[i + 2] + vertexCount;
+
+                String face = "f " + v1 + " " + v2 + " " + v3;
+                str.append(face).append("\n");
+            }
+
+            vertexCount += objMesh.vertices.length / 3;
         }
 
-        str += "# FACES \n";
-        str += "o " + name + "\n";
-        // Indices
-        for (int i = 0; i < indices.length; i += 3) {
-            int v1 = indices[i] + 1;
-            int v2 = indices[i + 1] + 1;
-            int v3 = indices[i + 2] + 1;
-
-            String face = "f " + (v1 + startIndex) + " " + (v2 + startIndex) + " " + (v3 + startIndex);
-
-            str += face + "\n";
-        }
-        startIndex += vertices.length / 3;
-        return str;
+        return str.toString();
     }
 
 }
